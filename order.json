@@ -1,0 +1,54 @@
+[
+  {
+    "orderId": "ORD001",
+
+    "from": "Mumbai",
+    "to": "Pune",
+
+    "status": "In Transit",
+
+    "selectedRouteId": "R1",
+
+    "routes": [
+      {
+        "routeId": "R1",
+        "summary": "Express Highway",
+        "distance": 150,
+        "eta": "2026-03-28T14:30:00",
+        "delay": 20,
+        "risk": "Medium"
+      },
+      {
+        "routeId": "R2",
+        "summary": "City + Highway",
+        "distance": 165,
+        "eta": "2026-03-28T14:50:00",
+        "delay": 35,
+        "risk": "High"
+      }
+    ],
+
+    "currentLocation": {
+      "lat": 19.0760,
+      "lng": 72.8777
+    },
+
+    "delivery": {
+      "baseCharge": 100,
+      "fastDeliveryCharge": 150
+    },
+
+    "compensation": {
+      "eligible": true,
+      "percentage": 20,
+      "claimed": false
+    },
+
+    "delayReason": "Heavy traffic and rain",
+
+    "trends": {
+      "busyDays": ["Saturday", "Sunday"],
+      "priceIncreaseRate": "15%"
+    }
+  }
+]
