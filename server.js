@@ -1,393 +1,311 @@
-const express = require("express");
 
+const express = require("express");
 const app = express();
 const PORT = 3000;
-
+ 
 app.use(express.json());
-
-const cors = require('cors');
+const cors = require("cors");
 app.use(cors());
-
-// Hardcoded users for prototype login
+ 
+// ── Users ──────────────────────────────────────────────────────────────────
 const USERS = [
   { username: "planner1", password: "123", role: "planner" },
   { username: "customer1", password: "123", role: "customer" },
 ];
-
-// In-memory storage for prediction results
-const deliveries = [];
-
-// Simple unique ID generator for delivery records
-function generateDeliveryId() {
-  return `DEL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+ 
+// ── In-memory stores ────────────────────────────────────────────────────────
+const deliveries = [];          // all confirmed deliveries
+const routeSessions = {};       // temporary route-comparison sessions
+ 
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function generateId(prefix = "DEL") {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
-
-function isEmpty(value) {
-  return value === undefined || value === null || String(value).trim() === "";
+ 
+function isEmpty(v) {
+  return v === undefined || v === null || String(v).trim() === "";
 }
-
-function addMinutesToTimeString(timeString, minutesToAdd) {
-  // Expected input like "10:30" or "14:45"
-  const parts = String(timeString).split(":");
-  if (parts.length !== 2) {
-    return null;
-  }
-
-  const hours = Number(parts[0]);
-  const minutes = Number(parts[1]);
-
-  if (
-    Number.isNaN(hours) ||
-    Number.isNaN(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return null;
-  }
-
-  const total = hours * 60 + minutes + minutesToAdd;
-  const dayMinutes = 24 * 60;
-  const normalized = ((total % dayMinutes) + dayMinutes) % dayMinutes;
-
-  const newHours = Math.floor(normalized / 60)
-    .toString()
-    .padStart(2, "0");
-  const newMinutes = (normalized % 60).toString().padStart(2, "0");
-
-  return `${newHours}:${newMinutes}`;
+ 
+function addMinutesToTimeString(timeStr, mins) {
+  const parts = String(timeStr).split(":");
+  if (parts.length !== 2) return null;
+  const h = Number(parts[0]), m = Number(parts[1]);
+  if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
+  const total = h * 60 + m + mins;
+  const norm = ((total % 1440) + 1440) % 1440;
+  return `${String(Math.floor(norm / 60)).padStart(2, "0")}:${String(norm % 60).padStart(2, "0")}`;
 }
-
-function validatePredictInput(body) {
-  const { distance, traffic, weather, timeOfDay, expectedDeliveryTime } = body;
-
-  if (
-    isEmpty(distance) ||
-    isEmpty(traffic) ||
-    isEmpty(weather) ||
-    isEmpty(timeOfDay) ||
-    isEmpty(expectedDeliveryTime)
-  ) {
-    return "All fields are required: distance, traffic, weather, timeOfDay, expectedDeliveryTime.";
-  }
-
-  const distanceNum = Number(distance);
-  if (Number.isNaN(distanceNum) || distanceNum < 0) {
-    return "distance must be a valid non-negative number.";
-  }
-
-  const validTraffic = ["Low", "Medium", "High"];
-  const validWeather = ["Clear", "Rain"];
-  const validTimeOfDay = ["Morning", "Afternoon", "Evening"];
-
-  if (!validTraffic.includes(traffic)) {
-    return "traffic must be one of: Low, Medium, High.";
-  }
-
-  if (!validWeather.includes(weather)) {
-    return "weather must be one of: Clear, Rain.";
-  }
-
-  if (!validTimeOfDay.includes(timeOfDay)) {
-    return "timeOfDay must be one of: Morning, Afternoon, Evening.";
-  }
-
-  if (!addMinutesToTimeString(expectedDeliveryTime, 0)) {
-    return "expectedDeliveryTime must be in HH:MM 24-hour format (example: 14:30).";
-  }
-
-  return null;
-}
-
+ 
+// ── Core prediction engine ───────────────────────────────────────────────────
 function calculatePrediction(input) {
   const { distance, traffic, weather, timeOfDay, expectedDeliveryTime } = input;
-
-  let score = 0;
-  let delayMinutes = 0;
-  const reasons = [];
-  const suggestions = [];
-
-  // Traffic has highest weight
-  if (traffic === "High") {
-    score += 4;
-    delayMinutes += 25;
-    reasons.push("High traffic detected.");
-    suggestions.push("Use an alternate route to avoid congestion.");
-  } else if (traffic === "Medium") {
-    score += 2;
-    delayMinutes += 10;
-    reasons.push("Medium traffic conditions.");
-  } else {
-    score += 0;
-  }
-
-  // Weather has medium weight
-  if (weather === "Rain") {
-    score += 2;
-    delayMinutes += 15;
-    reasons.push("Rain may slow down delivery speed.");
-    suggestions.push("Add buffer time for weather-related delays.");
-  }
-
-  // Distance has medium weight
-  if (distance > 100) {
-    score += 2;
-    delayMinutes += 15;
-    reasons.push("Long travel distance increases disruption risk.");
-    suggestions.push("Dispatch earlier for long-distance deliveries.");
-  } else if (distance > 50) {
-    score += 1;
-    delayMinutes += 8;
-    reasons.push("Moderate travel distance.");
-  }
-
-  // Time of day has medium weight
-  if (timeOfDay === "Evening") {
-    score += 2;
-    delayMinutes += 12;
-    reasons.push("Evening slot often has heavier traffic.");
-  } else if (timeOfDay === "Afternoon") {
-    score += 1;
-    delayMinutes += 5;
-    reasons.push("Afternoon traffic may cause minor delay.");
-  }
-
-  // Combined condition example: High traffic + Rain => significantly higher risk
-  if (traffic === "High" && weather === "Rain") {
-    score += 3;
-    delayMinutes += 10;
-    reasons.push("Combined impact: High traffic with rain.");
-    suggestions.push("Consider rerouting and informing customer proactively.");
-  }
-
-  let risk = "Low";
-  if (score >= 8) {
-    risk = "High";
-  } else if (score >= 4) {
-    risk = "Medium";
-  }
-
-  const updatedDeliveryTime = addMinutesToTimeString(expectedDeliveryTime, delayMinutes);
-
-  // Remove duplicate suggestions for cleaner response
-  const uniqueSuggestions = [...new Set(suggestions)];
-
-  // مستقبل: integrate weather API here
-  // مستقبل: integrate traffic API here
-  // مستقبل: replace rule-based score with AI/ML prediction model
-
+ 
+  let score = 0, delay = 0;
+  const reasons = [], suggestions = [];
+ 
+  if (traffic === "High")        { score += 4; delay += 25; reasons.push("High traffic detected."); suggestions.push("Use an alternate route to avoid congestion."); }
+  else if (traffic === "Medium") { score += 2; delay += 10; reasons.push("Medium traffic conditions."); }
+ 
+  if (weather === "Rain")        { score += 2; delay += 15; reasons.push("Rain may slow delivery speed."); suggestions.push("Add buffer time for weather-related delays."); }
+ 
+  if (distance > 100)            { score += 2; delay += 15; reasons.push("Long travel distance increases disruption risk."); suggestions.push("Dispatch earlier for long-distance deliveries."); }
+  else if (distance > 50)        { score += 1; delay +=  8; reasons.push("Moderate travel distance."); }
+ 
+  if (timeOfDay === "Evening")   { score += 2; delay += 12; reasons.push("Evening slot often has heavier traffic."); }
+  else if (timeOfDay === "Afternoon") { score += 1; delay += 5; reasons.push("Afternoon traffic may cause minor delays."); }
+ 
+  if (traffic === "High" && weather === "Rain") { score += 3; delay += 10; reasons.push("Combined impact: High traffic with rain."); suggestions.push("Consider rerouting and informing customer proactively."); }
+ 
+  const risk = score >= 8 ? "High" : score >= 4 ? "Medium" : "Low";
+  return { risk, delayMinutes: delay, updatedDeliveryTime: addMinutesToTimeString(expectedDeliveryTime, delay), reasons, suggestions: [...new Set(suggestions)] };
+}
+ 
+// ── Route-level prediction (accepts extra route metadata) ────────────────────
+function predictForRoute(routeInput) {
+  // routeInput: { distance, traffic, weather, timeOfDay, expectedDeliveryTime, routeName, durationMinutes }
+  const base = calculatePrediction(routeInput);
+ 
+  // Slightly vary score based on route duration to differentiate routes
+  const durationBonus = routeInput.durationMinutes > 90 ? 5 : 0;
+  const extraDelay = durationBonus;
+ 
   return {
-    risk,
-    delayMinutes,
-    updatedDeliveryTime,
-    reasons,
-    suggestions: uniqueSuggestions,
+    ...base,
+    delayMinutes: base.delayMinutes + extraDelay,
+    updatedDeliveryTime: addMinutesToTimeString(routeInput.expectedDeliveryTime, base.delayMinutes + extraDelay),
+    routeName: routeInput.routeName,
+    distanceKm: routeInput.distance,
+    durationMinutes: routeInput.durationMinutes,
   };
 }
-
+ 
+// ── AI best-route selector (rule-based heuristic branded as AI) ──────────────
+function selectBestRoute(routes) {
+  // Score each route: lower risk + lower delay + shorter distance = better
+  const riskWeight = { Low: 0, Medium: 50, High: 120 };
+  const scored = routes.map((r, i) => ({
+    index: i,
+    score: riskWeight[r.risk] + r.delayMinutes * 1.2 + r.distanceKm * 0.3,
+  }));
+  scored.sort((a, b) => a.score - b.score);
+  const best = scored[0].index;
+  const explanation = `Route "${routes[best].routeName}" selected: ${routes[best].risk} risk, ${routes[best].delayMinutes} min estimated delay, ${routes[best].distanceKm.toFixed(1)} km. Weighted scoring across risk level, delay, and distance.`;
+  return { bestIndex: best, explanation };
+}
+ 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENDPOINTS
+// ═══════════════════════════════════════════════════════════════════════════════
+ 
+// ── Auth ─────────────────────────────────────────────────────────────────────
 app.post("/login", (req, res) => {
   try {
     const { username, password } = req.body;
-
-    if (isEmpty(username) || isEmpty(password)) {
-      return res.status(400).json({
-        success: false,
-        message: "username and password are required.",
-      });
-    }
-
-    const user = USERS.find(
-      (u) => u.username === username && u.password === password
-    );
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid username or password.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Login successful.",
-      role: user.role,
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid request payload.",
-    });
-  }
+    if (isEmpty(username) || isEmpty(password))
+      return res.status(400).json({ success: false, message: "username and password are required." });
+    const user = USERS.find(u => u.username === username && u.password === password);
+    if (!user) return res.status(401).json({ success: false, message: "Invalid credentials." });
+    return res.json({ success: true, role: user.role });
+  } catch { return res.status(400).json({ success: false, message: "Invalid request." }); }
 });
-
+ 
+// ── Legacy single prediction (kept for backward compat) ─────────────────────
 app.post("/predict", (req, res) => {
   try {
-    const validationError = validatePredictInput(req.body);
-    if (validationError) {
-      return res.status(400).json({
-        success: false,
-        message: validationError,
-      });
-    }
-
     const { distance, traffic, weather, timeOfDay, expectedDeliveryTime } = req.body;
-
-    const result = calculatePrediction({
-      distance: Number(distance),
+    if ([distance, traffic, weather, timeOfDay, expectedDeliveryTime].some(v => isEmpty(v)))
+      return res.status(400).json({ success: false, message: "All fields required." });
+ 
+    const result = calculatePrediction({ distance: Number(distance), traffic, weather, timeOfDay, expectedDeliveryTime });
+    const deliveryId = generateId();
+    deliveries.push({ deliveryId, input: req.body, output: result, confirmedRoute: null, status: "pending", createdAt: new Date().toISOString() });
+    return res.json({ success: true, deliveryId, ...result });
+  } catch { return res.status(400).json({ success: false, message: "Invalid request." }); }
+});
+ 
+// ── Multi-route comparison ────────────────────────────────────────────────────
+// POST /routes/compare
+// Body: { traffic, weather, timeOfDay, expectedDeliveryTime, routes: [{ name, distanceKm, durationMinutes }] }
+app.post("/routes/compare", (req, res) => {
+  try {
+    const { traffic, weather, timeOfDay, expectedDeliveryTime, routes } = req.body;
+    if (!routes || !Array.isArray(routes) || routes.length < 1)
+      return res.status(400).json({ success: false, message: "Provide at least one route." });
+ 
+    const predictions = routes.map(r => predictForRoute({
+      distance: r.distanceKm,
       traffic,
       weather,
       timeOfDay,
       expectedDeliveryTime,
-    });
-
-    const deliveryRecord = {
-      deliveryId: generateDeliveryId(),
-      input: {
-        distance: Number(distance),
-        traffic,
-        weather,
-        timeOfDay,
-        expectedDeliveryTime,
-      },
-      output: {
-        risk: result.risk,
-        delayMinutes: result.delayMinutes,
-        updatedDeliveryTime: result.updatedDeliveryTime,
-        reasons: result.reasons,
-        suggestions: result.suggestions,
-      },
+      routeName: r.name,
+      durationMinutes: r.durationMinutes,
+    }));
+ 
+    const { bestIndex, explanation } = selectBestRoute(predictions);
+    const sessionId = generateId("SES");
+    routeSessions[sessionId] = { traffic, weather, timeOfDay, expectedDeliveryTime, routes: predictions, bestIndex, createdAt: new Date().toISOString() };
+ 
+    return res.json({ success: true, sessionId, routes: predictions, bestIndex, aiExplanation: explanation });
+  } catch (e) {
+    console.error(e);
+    return res.status(400).json({ success: false, message: "Route comparison failed." });
+  }
+});
+ 
+// ── Confirm route choice ──────────────────────────────────────────────────────
+// POST /routes/confirm
+// Body: { sessionId, chosenRouteIndex, from, to }
+app.post("/routes/confirm", (req, res) => {
+  try {
+    const { sessionId, chosenRouteIndex, from, to } = req.body;
+    const session = routeSessions[sessionId];
+    if (!session) return res.status(404).json({ success: false, message: "Session not found." });
+ 
+    const chosen = session.routes[chosenRouteIndex];
+    const deliveryId = generateId();
+ 
+    const delivery = {
+      deliveryId,
+      from,
+      to,
+      chosenRoute: chosen,
+      allRoutes: session.routes,
+      bestIndex: session.bestIndex,
+      plannedETA: chosen.updatedDeliveryTime,
+      status: "dispatched",
+      progress: 0,          // 0–100
       createdAt: new Date().toISOString(),
     };
-
-    deliveries.push(deliveryRecord);
-
-    return res.status(200).json({
-      success: true,
-      message: "Prediction generated successfully.",
-      deliveryId: deliveryRecord.deliveryId,
-      risk: result.risk,
-      delayMinutes: result.delayMinutes,
-      updatedDeliveryTime: result.updatedDeliveryTime,
-      reasons: result.reasons,
-      suggestions: result.suggestions,
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid request payload.",
-    });
-  }
+ 
+    deliveries.push(delivery);
+    delete routeSessions[sessionId];
+ 
+    return res.json({ success: true, deliveryId, delivery });
+  } catch { return res.status(400).json({ success: false, message: "Confirm failed." }); }
 });
-
+ 
+// ── Delivery status (customer tracking) ──────────────────────────────────────
 app.get("/status/:deliveryId", (req, res) => {
   try {
-    const { deliveryId } = req.params;
+    const record = deliveries.find(d => d.deliveryId === req.params.deliveryId);
+    if (!record) return res.status(404).json({ success: false, message: "Delivery not found." });
+    return res.json({ success: true, ...record });
+  } catch { return res.status(400).json({ success: false, message: "Could not fetch status." }); }
+});
+ 
+// ── List all deliveries (planner history) ────────────────────────────────────
+app.get("/deliveries", (req, res) => {
+  return res.json({ success: true, deliveries });
+});
 
-    if (isEmpty(deliveryId)) {
-      return res.status(400).json({
-        success: false,
-        message: "deliveryId is required.",
-      });
+// ── Weather Calculation ─────────────────────────────────────────
+// GET /weather/:lat/:lng
+app.get("/weather/:lat/:lng", (req, res) => {
+  try {
+    const { lat, lng } = req.params;
+    const latNum = parseFloat(lat);
+    const lngNum = parseFloat(lng);
+    
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      return res.status(400).json({ success: false, message: "Invalid coordinates." });
     }
 
-    const record = deliveries.find((item) => item.deliveryId === deliveryId);
-
-    if (!record) {
-      return res.status(400).json({
-        success: false,
-        message: "Delivery not found.",
-      });
-    }
-
-    return res.status(200).json({
+    // Simulate weather based on location (Kerala is 8-12°N, 76-77°E)
+    const isKerala = latNum >= 8 && latNum <= 12.5 && lngNum >= 75.5 && lngNum <= 77.5;
+    
+    // Probabilistic weather simulation
+    const weatherTypes = ["Clear", "Clouds", "Rain", "Drizzle"];
+    const dataHash = Math.abs(Math.sin(latNum) * Math.sin(lngNum)) * 10000;
+    const weatherIdx = Math.floor(dataHash) % weatherTypes.length;
+    const weather = weatherTypes[weatherIdx];
+    
+    const temp = isKerala ? 28 + Math.random() * 4 : 20 + Math.random() * 10;
+    const humidity = 60 + Math.random() * 30;
+    const windSpeed = 5 + Math.random() * 15;
+    
+    return res.json({
       success: true,
-      deliveryId: record.deliveryId,
-      risk: record.output.risk,
-      delayMinutes: record.output.delayMinutes,
-      updatedDeliveryTime: record.output.updatedDeliveryTime,
-      reasons: record.output.reasons,
-      suggestions: record.output.suggestions,
+      location: { lat: latNum, lng: lngNum, isKerala },
+      weather: {
+        condition: weather,
+        temperature: Math.round(temp * 10) / 10,
+        humidity: Math.round(humidity),
+        windSpeed: Math.round(windSpeed * 10) / 10,
+        description: weather === "Rain" ? "Rainy conditions" : weather === "Drizzle" ? "Light drizzle" : weather === "Clouds" ? "Cloudy" : "Clear skies"
+      },
+      impact: weather === "Rain" ? "High" : weather === "Drizzle" ? "Medium" : "Low"
     });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: "Could not fetch delivery status.",
-    });
+  } catch (e) {
+    console.error(e);
+    return res.status(400).json({ success: false, message: "Weather fetch failed." });
   }
 });
 
-app.get("/", (req, res) => {
-  res.status(200).json({
-    message: "Smart Supply Chain Disruption Prediction System API is running.",
-  });
+// ── Traffic Calculation ──────────────────────────────────────────
+// POST /traffic/estimate
+// Body: { fromLat, fromLng, toLat, toLng, timeOfDay, dayOfWeek }
+app.post("/traffic/estimate", (req, res) => {
+  try {
+    const { fromLat, fromLng, toLat, toLng, timeOfDay, dayOfWeek } = req.body;
+    
+    if ([fromLat, fromLng, toLat, toLng, timeOfDay].some(v => isEmpty(v))) {
+      return res.status(400).json({ success: false, message: "Required fields: fromLat, fromLng, toLat, toLng, timeOfDay." });
+    }
+
+    const latNum1 = parseFloat(fromLat);
+    const lngNum1 = parseFloat(fromLng);
+    const latNum2 = parseFloat(toLat);
+    const lngNum2 = parseFloat(toLng);
+
+    if ([latNum1, lngNum1, latNum2, lngNum2].some(v => isNaN(v))) {
+      return res.status(400).json({ success: false, message: "Invalid coordinates." });
+    }
+
+    // Estimate distance using simple Haversine approximation
+    const R = 6371; // km
+    const dLat = (latNum2 - latNum1) * Math.PI / 180;
+    const dLng = (lngNum2 - lngNum1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(latNum1 * Math.PI / 180) * Math.cos(latNum2 * Math.PI / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    // Traffic level based on time of day and simulated conditions
+    let trafficLevel = "Low";
+    let speedFactor = 1.0;
+    
+    if (timeOfDay === "Morning") {
+      trafficLevel = Math.random() > 0.6 ? "High" : "Medium";
+      speedFactor = trafficLevel === "High" ? 0.5 : 0.75;
+    } else if (timeOfDay === "Afternoon") {
+      trafficLevel = Math.random() > 0.5 ? "Medium" : "Low";
+      speedFactor = trafficLevel === "Medium" ? 0.7 : 1.0;
+    } else if (timeOfDay === "Evening") {
+      trafficLevel = "High";
+      speedFactor = 0.4;
+    }
+
+    const baseSpeed = 60; // km/h
+    const avgSpeed = baseSpeed * speedFactor;
+    const estimatedTime = Math.round((distance / avgSpeed) * 60); // minutes
+
+    return res.json({
+      success: true,
+      distance: Math.round(distance * 10) / 10,
+      trafficLevel,
+      avgSpeed: Math.round(avgSpeed),
+      estimatedTimeMinutes: estimatedTime,
+      speedFactor: Math.round(speedFactor * 100) / 100,
+      delay: trafficLevel === "High" ? 25 : trafficLevel === "Medium" ? 10 : 0
+    });
+  } catch (e) {
+    console.error(e);
+    return res.status(400).json({ success: false, message: "Traffic estimation failed." });
+  }
 });
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-/*
-Sample Requests & Responses
-
-1) Login
-POST /login
-{
-  "username": "planner1",
-  "password": "123"
-}
-
-Response (200)
-{
-  "success": true,
-  "message": "Login successful.",
-  "role": "planner"
-}
-
-2) Prediction
-POST /predict
-{
-  "distance": 120,
-  "traffic": "High",
-  "weather": "Rain",
-  "timeOfDay": "Evening",
-  "expectedDeliveryTime": "14:30"
-}
-
-Response (200)
-{
-  "success": true,
-  "message": "Prediction generated successfully.",
-  "deliveryId": "DEL-1711111111111-123",
-  "risk": "High",
-  "delayMinutes": 77,
-  "updatedDeliveryTime": "15:47",
-  "reasons": [
-    "High traffic detected.",
-    "Rain may slow down delivery speed.",
-    "Long travel distance increases disruption risk.",
-    "Evening slot often has heavier traffic.",
-    "Combined impact: High traffic with rain."
-  ],
-  "suggestions": [
-    "Use an alternate route to avoid congestion.",
-    "Add buffer time for weather-related delays.",
-    "Dispatch earlier for long-distance deliveries.",
-    "Consider rerouting and informing customer proactively."
-  ]
-}
-
-3) Delivery Status
-GET /status/DEL-1711111111111-123
-
-Response (200)
-{
-  "success": true,
-  "deliveryId": "DEL-1711111111111-123",
-  "risk": "High",
-  "delayMinutes": 77,
-  "updatedDeliveryTime": "15:47",
-  "reasons": ["..."],
-  "suggestions": ["..."]
-}
-*/
+ 
+// ── Health ───────────────────────────────────────────────────────────────────
+app.get("/", (req, res) => res.json({ message: "SupplyIQ API running." }));
+ 
+app.listen(PORT, () => console.log(`SupplyIQ API → http://localhost:${PORT}`));
