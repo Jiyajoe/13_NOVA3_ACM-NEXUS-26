@@ -5,6 +5,9 @@ const PORT = 3000;
 
 app.use(express.json());
 
+const cors = require('cors');
+app.use(cors());
+
 // Hardcoded users for prototype login
 const USERS = [
   { username: "planner1", password: "123", role: "planner" },

@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SupplyIQ — Disruption Prediction</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #090d14;
+    --surface: #0e1520;
+    --surface2: #141d2b;
+    --border: rgba(255,255,255,0.07);
+    --accent: #00e5a0;
+    --accent2: #0099ff;
+    --warn: #ffb340;
+    --danger: #ff4d6a;
+    --text: #e8edf5;
+    --muted: #5a6a82;
+    --card-shadow: 0 2px 32px rgba(0,0,0,0.5);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ───── GRID BG ───── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ───── VIEWS ───── */
+  .view { display: none; position: relative; z-index: 1; }
+  .view.active { display: flex; }
+
+  /* ══════════ LOGIN ══════════ */
+  #loginView {
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--card-shadow), 0 0 80px rgba(0,229,160,0.05);
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-mark {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 36px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: grid; place-items: center;
+  }
+  .logo-icon svg { width: 20px; height: 20px; }
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+  }
+  .logo-text span { color: var(--accent); }
+
+  .login-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .login-sub { color: var(--muted); font-size: 0.78rem; margin-bottom: 32px; }
+
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,160,0.12);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #090d14;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .login-hint {
+    margin-top: 20px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .login-hint code {
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  .err-msg {
+    background: rgba(255,77,106,0.1);
+    border: 1px solid rgba(255,77,106,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    color: var(--danger);
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ══════════ APP SHELL ══════════ */
+  #appView {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ───── TOPBAR ───── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(9,13,20,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-logo { display: flex; align-items: center; gap: 10px; }
+  .topbar-logo .logo-text { font-size: 1.1rem; }
+
+  .user-badge {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.78rem;
+  }
+  .role-chip {
+    background: rgba(0,229,160,0.1);
+    border: 1px solid rgba(0,229,160,0.25);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ───── MAIN CONTENT ───── */
+  .app-body {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 0;
+    flex: 1;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* ───── SIDEBAR FORM ───── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 32px 28px;
+    overflow-y: auto;
+  }
+
+  .sidebar-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sidebar-heading::before {
+    content: '';
+    display: block; width: 4px; height: 4px;
+    background: var(--accent); border-radius: 50%;
+  }
+
+  .section-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 24px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .select-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .select-option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    user-select: none;
+  }
+  .select-option:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+  .select-option.sel {
+    border-color: var(--accent);
+    background: rgba(0,229,160,0.08);
+    color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,160,0.08);
+  }
+  .select-option .opt-icon { font-size: 1.1rem; margin-bottom: 4px; display: block; }
+
+  .range-group {
+    display: flex; align-items: center; gap: 12px;
+  }
+  input[type="range"] {
+    flex: 1;
+    appearance: none;
+    background: var(--surface2);
+    height: 4px;
+    border-radius: 4px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .range-val {
+    font-size: 0.85rem;
+    min-width: 60px;
+    text-align: right;
+    color: var(--accent);
+  }
+
+  .time-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .time-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,160,0.12);
+  }
+
+  .predict-btn {
+    width: 100%;
+    margin-top: 28px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), #00b87a);
+    color: #090d14;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .predict-btn:hover {
+    opacity: 0.92; transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,229,160,0.3);
+  }
+  .predict-btn:active { transform: translateY(0); }
+  .predict-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ───── MAIN PANEL ───── */
+  .main-panel {
+    padding: 32px 36px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ───── EMPTY STATE ───── */
+  .empty-state {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; gap: 16px;
+    opacity: 0.45;
+    animation: fadeUp 0.6s ease both;
+  }
+  .empty-icon {
+    width: 72px; height: 72px;
+    border: 2px dashed var(--muted);
+    border-radius: 16px;
+    display: grid; place-items: center;
+    font-size: 1.8rem;
+  }
+  .empty-state p { font-size: 0.82rem; color: var(--muted); max-width: 220px; line-height: 1.6; }
+
+  /* ───── RESULT CARD ───── */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .result-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-id {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .result-id strong { color: var(--accent); }
+
+  /* Risk badges */
+  .risk-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+  }
+  .risk-badge .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.7; }
+  }
+  .risk-badge.Low { background: rgba(0,229,160,0.1); color: var(--accent); }
+  .risk-badge.Low .dot { background: var(--accent); }
+  .risk-badge.Medium { background: rgba(255,179,64,0.12); color: var(--warn); }
+  .risk-badge.Medium .dot { background: var(--warn); }
+  .risk-badge.High { background: rgba(255,77,106,0.12); color: var(--danger); }
+  .risk-badge.High .dot { background: var(--danger); }
+
+  .result-body { padding: 24px; }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .stat-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.warn { color: var(--warn); }
+  .stat-value.danger { color: var(--danger); }
+
+  /* Two-col details */
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .detail-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .detail-title {
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .detail-title svg { width: 12px; height: 12px; }
+
+  .reason-item, .suggest-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 0.77rem;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    color: #c5cdd9;
+  }
+  .reason-item::before {
+    content: '—';
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .suggest-item::before {
+    content: '→';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Input Echo */
+  .echo-row {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+  }
+  .echo-chip {
+    font-size: 0.68rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--muted);
+  }
+  .echo-chip span { color: var(--text); margin-left: 4px; }
+
+  /* ───── HISTORY ───── */
+  .history-section { }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: var(--border);
+  }
+
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    animation: fadeUp 0.3s ease both;
+  }
+  .history-item:hover { background: var(--surface2); border-color: rgba(255,255,255,0.12); }
+
+  .history-meta { font-size: 0.75rem; color: var(--muted); }
+  .history-meta strong { color: var(--text); display: block; margin-bottom: 2px; font-size: 0.8rem; }
+
+  .history-tags { display: flex; gap: 6px; align-items: center; }
+  .tag {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-weight: 500;
+  }
+  .tag.Low { background: rgba(0,229,160,0.12); color: var(--accent); }
+  .tag.Medium { background: rgba(255,179,64,0.12); color: var(--warn); }
+  .tag.High { background: rgba(255,77,106,0.12); color: var(--danger); }
+  .tag.km { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  /* ───── LOADING ───── */
+  .loading-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(9,13,20,0.8);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 0.78rem; color: var(--muted); }
+
+  /* ───── STATUS CHECKER ───── */
+  .status-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 0;
+  }
+  .status-bar input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+  }
+  .status-bar input::placeholder { color: var(--muted); }
+  .btn-check {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+  .btn-check:hover { border-color: var(--accent); background: rgba(0,229,160,0.06); }
+
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 0.8rem;
+    color: var(--text);
+    z-index: 200;
+    display: none;
+    animation: slideIn 0.3s ease;
+    max-width: 320px;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .toast.err { border-color: rgba(255,77,106,0.4); }
+  .toast.ok  { border-color: rgba(0,229,160,0.4); }
+
+  /* ───── RESPONSIVE ───── */
+  @media (max-width: 900px) {
+    .app-body { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .main-panel { padding: 24px 20px; }
+    .details-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 12px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ LOADING ══ -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p class="loading-text">Processing prediction...</p>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════ LOGIN VIEW ══════════ -->
+<div class="view active" id="loginView">
+  <div class="login-card">
+    <div class="logo-mark">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#090d14" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="logo-text">Supply<span>IQ</span></div>
+    </div>
+    <h1 class="login-title">Sign in</h1>
+    <p class="login-sub">Access the disruption prediction dashboard</p>
+
+    <div class="err-msg" id="loginErr"></div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="usernameInput" placeholder="planner1 / customer1" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="passwordInput" placeholder="••••••"/>
+    </div>
+
+    <button class="btn-primary" id="loginBtn" onclick="handleLogin()">Sign In →</button>
+
+    <div class="login-hint">
+      Demo credentials — <code>planner1</code> or <code>customer1</code>, password <code>123</code>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ APP VIEW ══════════ -->
+<div class="view" id="appView">
+
+  <!-- Topbar -->
+  <nav class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-icon" style="width:28px;height:28px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#090d14" stroke-width="2.5" stroke-linecap="round" style="width:15px;height:15px;">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="logo-text" style="font-size:1rem;">Supply<span>IQ</span></div>
+    </div>
+    <div class="user-badge">
+      <span id="userLabel" style="font-size:0.78rem; color:var(--muted);"></span>
+      <span class="role-chip" id="roleChip">—</span>
+      <button class="btn-logout" onclick="handleLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Body -->
+  <div class="app-body">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+      <div class="sidebar-heading">New Prediction</div>
+
+      <!-- Distance -->
+      <div class="section-label">Distance (km)</div>
+      <div class="range-group">
+        <input type="range" id="distanceRange" min="0" max="300" value="80" oninput="updateRange(this)"/>
+        <div class="range-val" id="distanceVal">80 km</div>
+      </div>
+
+      <!-- Traffic -->
+      <div class="section-label">Traffic Level</div>
+      <div class="select-group" id="trafficGroup">
+        <div class="select-option sel" data-val="Low" onclick="selectOpt('trafficGroup', this)">
+          <span class="opt-icon">🟢</span>Low
+        </div>
+        <div class="select-option" data-val="Medium" onclick="selectOpt('trafficGroup', this)">
+          <span class="opt-icon">🟡</span>Medium
+        </div>
+        <div class="select-option" data-val="High" onclick="selectOpt('trafficGroup', this)">
+          <span class="opt-icon">🔴</span>High
+        </div>
+      </div>
+
+      <!-- Weather -->
+      <div class="section-label">Weather</div>
+      <div class="select-group" id="weatherGroup">
+        <div class="select-option sel" data-val="Clear" onclick="selectOpt('weatherGroup', this)">
+          <span class="opt-icon">☀️</span>Clear
+        </div>
+        <div class="select-option" data-val="Rain" onclick="selectOpt('weatherGroup', this)">
+          <span class="opt-icon">🌧️</span>Rain
+        </div>
+      </div>
+
+      <!-- Time of Day -->
+      <div class="section-label">Time of Day</div>
+      <div class="select-group" id="timeOfDayGroup">
+        <div class="select-option sel" data-val="Morning" onclick="selectOpt('timeOfDayGroup', this)">
+          <span class="opt-icon">🌅</span>Morning
+        </div>
+        <div class="select-option" data-val="Afternoon" onclick="selectOpt('timeOfDayGroup', this)">
+          <span class="opt-icon">🌤️</span>Afternoon
+        </div>
+        <div class="select-option" data-val="Evening" onclick="selectOpt('timeOfDayGroup', this)">
+          <span class="opt-icon">🌙</span>Evening
+        </div>
+      </div>
+
+      <!-- Expected Delivery Time -->
+      <div class="section-label">Expected Delivery Time</div>
+      <input class="time-input" type="time" id="deliveryTime" value="14:30"/>
+
+      <button class="predict-btn" id="predictBtn" onclick="handlePredict()">
+        ⚡ Run Prediction
+      </button>
+
+      <!-- Status Checker -->
+      <div class="section-label" style="margin-top:32px;">Check Delivery Status</div>
+      <div class="status-bar">
+        <input type="text" id="statusIdInput" placeholder="DEL-1234567890-123"/>
+        <button class="btn-check" onclick="handleStatusCheck()">Check</button>
+      </div>
+    </aside>
+
+    <!-- ── MAIN PANEL ── -->
+    <main class="main-panel" id="mainPanel">
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📦</div>
+        <h3 style="font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; opacity:1; color:var(--text);">No predictions yet</h3>
+        <p>Configure your delivery parameters and run a prediction to see disruption analysis.</p>
+      </div>
+    </main>
+
+  </div><!-- /app-body -->
+</div><!-- /appView -->
+
+
+<script>
+  const BASE = 'http://localhost:3000';
+  let currentUser = null;
+  let predictionHistory = [];
+
+  /* ── helpers ── */
+  function showToast(msg, type='ok') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type}`;
+    t.style.display = 'block';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.style.display = 'none', 3500);
+  }
+
+  function setLoading(state) {
+    document.getElementById('loadingOverlay').classList.toggle('show', state);
+  }
+
+  function switchView(view) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(view).classList.add('active');
+  }
+
+  function selectOpt(groupId, el) {
+    document.querySelectorAll(`#${groupId} .select-option`)
+      .forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+  }
+
+  function getSelected(groupId) {
+    const el = document.querySelector(`#${groupId} .sel`);
+    return el ? el.dataset.val : null;
+  }
+
+  function updateRange(el) {
+    document.getElementById('distanceVal').textContent = `${el.value} km`;
+  }
+
+  /* ── Login ── */
+  async function handleLogin() {
+    const username = document.getElementById('usernameInput').value.trim();
+    const password = document.getElementById('passwordInput').value.trim();
+    const errEl = document.getElementById('loginErr');
+    errEl.style.display = 'none';
+
+    if (!username || !password) {
+      errEl.textContent = 'Both fields are required.';
+      errEl.style.display = 'block'; return;
+    }
+
+    document.getElementById('loginBtn').disabled = true;
+    try {
+      const res = await fetch(`${BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentUser = { username, role: data.role };
+        document.getElementById('userLabel').textContent = username;
+        document.getElementById('roleChip').textContent = data.role;
+        switchView('appView');
+        showToast(`Welcome back, ${username}!`);
+      } else {
+        errEl.textContent = data.message || 'Login failed.';
+        errEl.style.display = 'block';
+      }
+    } catch {
+      errEl.textContent = 'Cannot connect to server. Make sure the API is running on port 3000.';
+      errEl.style.display = 'block';
+    }
+    document.getElementById('loginBtn').disabled = false;
+  }
+
+  /* Enter key on login */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('loginView').classList.contains('active')) {
+      handleLogin();
+    }
+  });
+
+  function handleLogout() {
+    currentUser = null;
+    predictionHistory = [];
+    document.getElementById('usernameInput').value = '';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('loginErr').style.display = 'none';
+    renderMainPanel();
+    switchView('loginView');
+  }
+
+  /* ── Predict ── */
+  async function handlePredict() {
+    const distance = document.getElementById('distanceRange').value;
+    const traffic = getSelected('trafficGroup');
+    const weather = getSelected('weatherGroup');
+    const timeOfDay = getSelected('timeOfDayGroup');
+    const expectedDeliveryTime = document.getElementById('deliveryTime').value;
+
+    if (!expectedDeliveryTime) {
+      showToast('Please set an expected delivery time.', 'err'); return;
+    }
+
+    document.getElementById('predictBtn').disabled = true;
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ distance: Number(distance), traffic, weather, timeOfDay, expectedDeliveryTime })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const record = {
+          deliveryId: data.deliveryId,
+          input: { distance: Number(distance), traffic, weather, timeOfDay, expectedDeliveryTime },
+          output: {
+            risk: data.risk,
+            delayMinutes: data.delayMinutes,
+            updatedDeliveryTime: data.updatedDeliveryTime,
+            reasons: data.reasons,
+            suggestions: data.suggestions,
+          },
+          createdAt: new Date().toLocaleTimeString()
+        };
+        predictionHistory.unshift(record);
+        renderMainPanel(record);
+        showToast(`Prediction complete — Risk: ${data.risk}`);
+      } else {
+        showToast(data.message || 'Prediction failed.', 'err');
+      }
+    } catch {
+      showToast('Cannot connect to server.', 'err');
+    }
+    setLoading(false);
+    document.getElementById('predictBtn').disabled = false;
+  }
+
+  /* ── Status Check ── */
+  async function handleStatusCheck() {
+    const id = document.getElementById('statusIdInput').value.trim();
+    if (!id) { showToast('Enter a Delivery ID.', 'err'); return; }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE}/status/${encodeURIComponent(id)}`);
+      const data = await res.json();
+      if (data.success) {
+        const record = {
+          deliveryId: data.deliveryId,
+          input: {},
+          output: {
+            risk: data.risk,
+            delayMinutes: data.delayMinutes,
+            updatedDeliveryTime: data.updatedDeliveryTime,
+            reasons: data.reasons,
+            suggestions: data.suggestions,
+          },
+          createdAt: 'fetched'
+        };
+        renderMainPanel(record);
+        showToast('Status loaded.');
+      } else {
+        showToast(data.message || 'Not found.', 'err');
+      }
+    } catch {
+      showToast('Cannot connect to server.', 'err');
+    }
+    setLoading(false);
+  }
+
+  /* ── Render ── */
+  function renderMainPanel(latestRecord) {
+    const panel = document.getElementById('mainPanel');
+    if (!latestRecord && predictionHistory.length === 0) {
+      panel.innerHTML = `
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">📦</div>
+          <h3 style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;opacity:1;color:var(--text);">No predictions yet</h3>
+          <p>Configure your delivery parameters and run a prediction to see disruption analysis.</p>
+        </div>`;
+      return;
+    }
+
+    let html = '';
+
+    if (latestRecord) {
+      html += renderResultCard(latestRecord, true);
+    }
+
+    if (predictionHistory.length > 1) {
+      html += `<div class="history-section">
+        <div class="section-title">History</div>
+        <div class="history-list">`;
+      predictionHistory.slice(1).forEach(r => {
+        html += `<div class="history-item" onclick="expandRecord('${r.deliveryId}')">
+          <div class="history-meta">
+            <strong>${r.deliveryId}</strong>
+            ${r.createdAt} · ${r.input.distance ?? '?'} km
+          </div>
+          <div class="history-tags">
+            <span class="tag ${r.output.risk}">${r.output.risk} Risk</span>
+            <span class="tag km">+${r.output.delayMinutes} min</span>
+          </div>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    panel.innerHTML = html;
+  }
+
+  function expandRecord(id) {
+    const r = predictionHistory.find(x => x.deliveryId === id);
+    if (r) renderMainPanel(r);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderResultCard(r, isLatest) {
+    const { risk, delayMinutes, updatedDeliveryTime, reasons, suggestions } = r.output;
+    const input = r.input;
+
+    const colorClass = risk === 'High' ? 'danger' : risk === 'Medium' ? 'warn' : 'accent';
+
+    const reasonsHtml = (reasons || []).map(rs =>
+      `<div class="reason-item">${rs}</div>`).join('');
+    const suggestHtml = (suggestions || []).length
+      ? (suggestions || []).map(s => `<div class="suggest-item">${s}</div>`).join('')
+      : '<div class="reason-item" style="color:var(--muted);">No suggestions needed.</div>';
+
+    const echoHtml = Object.keys(input).length
+      ? `<div class="echo-row">
+          <div class="echo-chip">Distance<span>${input.distance} km</span></div>
+          <div class="echo-chip">Traffic<span>${input.traffic}</span></div>
+          <div class="echo-chip">Weather<span>${input.weather}</span></div>
+          <div class="echo-chip">Slot<span>${input.timeOfDay}</span></div>
+          <div class="echo-chip">Scheduled<span>${input.expectedDeliveryTime}</span></div>
+        </div>` : '';
+
+    return `
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-id">Delivery ID: <strong>${r.deliveryId}</strong></div>
+          <div class="risk-badge ${risk}">
+            <span class="dot"></span> ${risk} Risk
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-label">Risk Level</div>
+              <div class="stat-value ${colorClass}">${risk}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Est. Delay</div>
+              <div class="stat-value ${colorClass}">+${delayMinutes} min</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Revised ETA</div>
+              <div class="stat-value accent">${updatedDeliveryTime || '—'}</div>
+            </div>
+          </div>
+          <div class="details-grid">
+            <div class="detail-block">
+              <div class="detail-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Risk Factors
+              </div>
+              ${reasonsHtml || '<div class="reason-item" style="color:var(--muted);">None identified.</div>'}
+            </div>
+            <div class="detail-block">
+              <div class="detail-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                Suggestions
+              </div>
+              ${suggestHtml}
+            </div>
+          </div>
+        </div>
+        ${echoHtml}
+      </div>`;
+  }
+</script>
+</body>
+</html>
