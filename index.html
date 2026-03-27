@@ -208,7 +208,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .leaflet-popup-tip{background:var(--surface)}
  
 @media(max-width:800px){
-  .sidebar,.customer-sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:40vh;overflow-y:auto;border-radius:0}
+  .sidebar,.customer-sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:45vh;overflow-y:auto;border-radius:0}
   #plannerView .app-body,#customerView .app-body{flex-direction:column;gap:0;padding:0}
   .map-calc-container{flex-direction:column;gap:0;height:60vh}
   .map-area{border-radius:0;border:none}
@@ -270,10 +270,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <div class="sidebar-heading">Route Planner</div>
  
         <div class="section-label">Origin</div>
-        <input class="loc-input" id="fromInput" placeholder="e.g. Kochi, Kerala" oninput="debounceGeocode('from')"/>
+        <input class="loc-input" id="fromInput" placeholder="e.g. Mumbai, India" oninput="debounceGeocode('from')"/>
  
         <div class="section-label">Destination</div>
-        <input class="loc-input" id="toInput" placeholder="e.g. Thiruvananthapuram, Kerala" oninput="debounceGeocode('to')"/>
+        <input class="loc-input" id="toInput" placeholder="e.g. Pune, India" oninput="debounceGeocode('to')"/>
  
         <div class="section-label">Live Weather</div>
         <div id="weatherDisplay"><p class="weather-loading">Enter a location above to fetch weather.</p></div>
@@ -298,35 +298,35 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <button class="predict-btn" id="predictBtn" onclick="handleAnalyze()">⚡ Analyze Routes</button>
       </div>
     </aside>
-
+ 
     <!-- Map + Calculations -->
     <div class="map-calc-container">
       <!-- Map Area (Left/Top) -->
-      <div class="map-area">
-        <div class="map-loading hidden" id="mapLoading">
-          <div class="spinner"></div>
-          <p class="ml-text">Fetching routes...</p>
-        </div>
-        <div class="map-hint" id="mapHint">Enter origin and destination to see routes</div>
-        <div id="map"></div>
+    <div class="map-area">
+      <div class="map-loading hidden" id="mapLoading">
+        <div class="spinner"></div>
+        <p class="ml-text">Fetching routes...</p>
+      </div>
+      <div class="map-hint" id="mapHint">Enter origin and destination to see routes</div>
+      <div id="map"></div>
  
-        <div class="route-panel hidden" id="routePanel">
-          <div class="route-panel-inner">
-            <div class="routes-heading">Route Comparison</div>
-            <div class="routes-grid" id="routesGrid"></div>
-            <div class="ai-box" id="aiBox" style="display:none">
-              <div class="ai-icon">🤖</div>
-              <div>
-                <div class="ai-label">AI Recommendation</div>
-                <div class="ai-text" id="aiText"></div>
-              </div>
+      <div class="route-panel hidden" id="routePanel">
+        <div class="route-panel-inner">
+          <div class="routes-heading">Route Comparison</div>
+          <div class="routes-grid" id="routesGrid"></div>
+          <div class="ai-box" id="aiBox" style="display:none">
+            <div class="ai-icon">🤖</div>
+            <div>
+              <div class="ai-label">AI Recommendation</div>
+              <div class="ai-text" id="aiText"></div>
             </div>
           </div>
         </div>
+      </div>
  
-        <div class="confirm-bar hidden" id="confirmBar">
-          <div class="confirm-info" id="confirmInfo">Select a route above</div>
-          <button class="btn-confirm" id="confirmBtn" onclick="handleConfirm()">✓ Confirm &amp; Dispatch</button>
+      <div class="confirm-bar hidden" id="confirmBar">
+        <div class="confirm-info" id="confirmInfo">Select a route above</div>
+        <button class="btn-confirm" id="confirmBtn" onclick="handleConfirm()">✓ Confirm &amp; Dispatch</button>
         </div>
       </div>
 
@@ -456,7 +456,6 @@ async function handleLogin(){
         document.getElementById('plannerUserLabel').textContent=username;
         switchView('plannerView');
         initPlannerMap();
-        initializeWithDefaults();
       } else {
         document.getElementById('customerUserLabel').textContent=username;
         switchView('customerView');
@@ -490,33 +489,8 @@ function handleLogout(){
 // ══════════════════════════════════════════════════════════════
 function initPlannerMap(){
   if(plannerMap) return;
-  // Kerala bounds: approximately 8-12.5°N, 75.5-77.5°E
-  plannerMap=L.map('map',{zoomControl:true,attributionControl:false}).setView([10,76.3],8);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,minZoom:7}).addTo(plannerMap);
-  
-  // Set max bounds to Kerala region for constrained viewing
-  const keralaBounds=L.latLngBounds([[8,75.5],[12.5,77.5]]);
-  plannerMap.setMaxBounds(keralaBounds);
-}
-
-// ── Auto-initialize with default Kerala locations ──────────────
-function initializeWithDefaults(){
-  // Set default Kerala locations if not already set
-  if(!document.getElementById('fromInput').value.trim()){
-    document.getElementById('fromInput').value='Kochi, Kerala';
-    fromCoords={lat:9.9312,lng:76.2673};
-  }
-  if(!document.getElementById('toInput').value.trim()){
-    document.getElementById('toInput').value='Thiruvananthapuram, Kerala';
-    toCoords={lat:8.5241,lng:76.9366};
-  }
-  
-  // Auto-fetch routes with default values
-  setTimeout(() => {
-    if(fromCoords && toCoords && plannerMap){
-      fetchAndRenderRoutes();
-    }
-  }, 300);
+  plannerMap=L.map('map',{zoomControl:true,attributionControl:false}).setView([20.5937,78.9629],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(plannerMap);
 }
  
 // ── Geocoding ──────────────────────────────────────────────────
@@ -702,42 +676,12 @@ function selectRoute(idx){
       if(i===idx) l.bringToFront();
     }
   });
-  // Update calculation panel with selected route details
-  updateCalcPanel(routeData[idx]);
   // Update confirm bar
   const r=routeData[idx];
   if(r){
     const isBest=idx===bestRouteIdx;
     document.getElementById('confirmInfo').innerHTML=`<strong>${r.routeName}</strong> selected — ${r.risk} risk · +${r.delayMinutes} min · ETA ${r.updatedDeliveryTime||'—'}${isBest?' · <span style="color:var(--accent)">✓ AI Recommended</span>':''}`;
     document.getElementById('confirmBar').classList.remove('hidden');
-  }
-}
-
-// ── Update Calculation Panel ───────────────────────────────────
-function updateCalcPanel(route){
-  if(!route) return;
-  document.getElementById('calcRisk').textContent=route.risk;
-  document.getElementById('calcRisk').className=`calc-value ${route.risk}`;
-  document.getElementById('calcDelay').textContent=`+${route.delayMinutes} min`;
-  document.getElementById('calcDelay').className=`calc-value ${route.risk}`;
-  document.getElementById('calcETA').textContent=route.updatedDeliveryTime||'—';
-  document.getElementById('calcDistance').textContent=`${route.distanceKm.toFixed(1)} km`;
-  document.getElementById('calcDuration').textContent=`${route.durationMinutes} min`;
-  
-  // Reasons
-  const reasonsEl=document.getElementById('calcReasons');
-  if(route.reasons&&route.reasons.length){
-    reasonsEl.innerHTML=route.reasons.map(r=>`<div style="margin-bottom:4px">• ${r}</div>`).join('');
-  } else {
-    reasonsEl.textContent='No risk factors detected.';
-  }
-  
-  // Suggestions
-  const suggsEl=document.getElementById('calcSuggestions');
-  if(route.suggestions&&route.suggestions.length){
-    suggsEl.innerHTML=route.suggestions.map(s=>`<div style="margin-bottom:4px">→ ${s}</div>`).join('');
-  } else {
-    suggsEl.textContent='No suggestions at this time.';
   }
 }
  

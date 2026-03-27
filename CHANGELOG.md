@@ -42,6 +42,18 @@
 ### Issues Faced
 - JWT error fixed
 
+## 23:00
+
+### Features Added
+- Added index.html for frontend
+
+### Files Modified
+- index.html
+
+### Issues Faced
+- Port conflict while integrating frontend and backend
+
+
 ## 14:00
 
 ### Features Added
