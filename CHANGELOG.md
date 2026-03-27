@@ -32,22 +32,37 @@
 ## 18:30
 
 ### Features Added
-- Implemented login API
+- Implemented login API with user authentication
+- POST /login endpoint validates username and password
+- Returns user role (planner/customer) on successful authentication
 
 ### Files Modified
 - server.js
-- routes/auth.js
 
 ### Issues Faced
 - JWT error fixed
 
-## 23:00
+## 14:00
 
 ### Features Added
-- Added index.html for frontend
+- Implemented split dashboard layout with map and calculations panel side-by-side
+- Set Kerala-specific map bounds (8-12.5°N, 75.5-77.5°E) with zoom level 8
+- Added real-time calculation panel showing risk level, delay, ETA, and route details
+- Added default Kerala locations (Kochi → Thiruvananthapuram) with auto-calculation on login
+- Implemented GET /weather/:lat/:lng endpoint for weather calculation
+- Implemented POST /traffic/estimate endpoint for traffic level and delay estimation
+- Weather API includes temperature, humidity, wind speed, and impact assessment
+- Traffic API uses Haversine distance calculation with time-based speed factors
+- Auto-populate calculation panel when routes are selected
+- Responsive split layout for mobile screens
 
 ### Files Modified
-- index.html
+- server.js (added weather and traffic calculation APIs)
+- index.html (redesigned dashboard layout, added calculation panel, set Kerala map bounds)
+
+### Issues Faced
+- Removed stray "Copy" text from server.js causing ReferenceError
+- Successfully tested server startup with new endpoints
 
 ### Issues Faced
 - Port conflict while integrating frontend and backend
