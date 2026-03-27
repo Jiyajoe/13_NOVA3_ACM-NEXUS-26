@@ -51,3 +51,13 @@
 
 ### Issues Faced
 - Port conflict while integrating frontend and backend
+
+## 23:47
+### Features Added
+- Updated project README with complete system structure, features, and workflow
+
+### Files Modified
+- README.md
+
+### Issues Faced
+- None
