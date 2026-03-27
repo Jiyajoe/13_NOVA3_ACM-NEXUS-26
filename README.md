@@ -1,223 +1,184 @@
-# 🚀 Welcome to NEXUS
+# 🚀 SupplyIQ – Smart Supply Chain Disruption Prediction System
 
-### Conducted by | CLIQUE x ACM MITS |
+## 📖 Overview
 
-### 📅 March 27 & 28
+SupplyIQ is a web-based prototype designed to help logistics planners predict and prevent delivery disruptions before dispatch. The system analyzes multiple real-world factors such as distance, traffic, weather, and time of day to estimate delay risks and optimize delivery routes.
 
-### 📍 Muthoot Institute of Technology and Science
-
-<p align="center">
-  <img src="template_acm.png" width="500"/>
-  <img src="template_clique.png" width="250"/>
-</p>
+It provides a dual-dashboard experience for both planners and customers, ensuring transparency, efficiency, and smarter decision-making in supply chain operations.
 
 ---
 
-### 📖 Description
+## 🎯 Objectives
 
-A **16-hour hackathon** across various domains where innovation meets execution. Build, collaborate, and push your limits.
-
----
-
-## 🧠 Project Details (To be filled by participants)
-
-```md
-### 🏷️ Project Name:
-<Your Project Name>
-
-### 🎯 Chosen Domain:
-<One from the given domains>
-
-### ❗ Problem Statement:
-<What problem are you solving?>
-
-### 💡 Solution:
-<How does your project solve the problem?>
-```
+* Predict delivery delay risk (Low / Medium / High)
+* Estimate delay time
+* Suggest optimal delivery routes
+* Provide reasons for delays
+* Enable proactive decision-making
+* Improve customer transparency and satisfaction
 
 ---
 
-## 🎯 Hackathon Domains
+## 👥 User Profiles
 
-Participants must choose **one** of the following domains:
+### 👨‍💼 Planner Dashboard (Company)
 
-1️⃣ Digital Asset Protection
-2️⃣ Smart Supply Chains
-3️⃣ Digital Health & Predictive Care
-4️⃣ Climate Intelligence
-5️⃣ Cybersecurity & Threat Intelligence
+* Input delivery details (From → To)
+* View map with:
 
----
+  * Best route (AI suggested)
+  * Alternative routes
+* Dynamic route analysis:
 
-## ⚙️ Hackathon Workflow & Rules
-
-To ensure fairness and transparency, we have designed a structured development and tracking system.
-
----
-
-### 🔗 GitHub Template
-
-👉 **Template Repo:** `{link}`
-
-* All teams must **fork this repository**
-* Fork name must follow:
-
-```
-<TeamId>_<TeamName>_ACMNexus26
-```
-
-* Example:
-
-```
-12_CodeWarriors_ACMNexus26
-```
-
-* You may rename the repository **after the event ends**
+  * Risk level
+  * Estimated delay
+  * Route history
+  * Order status
+* Select or override AI-recommended route
+* Confirm route selection
+* View customer actions (e.g., delay compensation claims)
 
 ---
 
+### 👤 Customer Dashboard
+
+* 📍 Live order tracking using map
+* ⏱ View:
+
+  * Expected Arrival Time (ETA)
+  * Delay duration
+  * Current delivery status
+* 💸 Dynamic pricing insights:
+
+  * Increased charges for faster delivery
+* 📊 Delivery trends page:
+
+  * Upcoming busy days
+  * Predicted increase in delivery charges
 
 ---
 
-## 👥 Participation Rules
+### 🎁 Delay Compensation Feature
 
-* Team Size: **2–4 members**
-* **Pre-created projects are strictly not allowed**
-* All work must be done **during the hackathon timeframe**
-* Only registered team members must participate
-* Do **not attack or interfere** with college infrastructure/network
-* Follow all instructions from the organizing team
+* If delay exceeds 20 minutes:
 
----
+  * Customer is eligible for a percentage refund
+  * Claim option available in dashboard
+* Once claimed:
 
-## 📁 Repository Structure
-
-
-Repository must not be private. The template Repository includes:
-
-```
-AGENTS.md
-README.md
-CHANGELOG.md
-/progress/
-```
+  * Updates reflected in planner dashboard
+  * Delivery record adjusted accordingly
 
 ---
 
-## ⏱️ Hourly Progress Requirements
+## 🧠 System Functionality
 
-Every hour, teams must:
+### Inputs:
 
-* Make **at least one commit**
-* Add **at least one progress update** inside `/progress/`
+* Distance
+* Traffic conditions
+* Weather data
+* Time of day
+* Expected delivery time
 
-Progress can include:
+### Processing:
 
-* Screenshots
-* Screen recordings
-* Dataset snapshots
-* Any meaningful proof of work
+* Weighted scoring model (AI-like logic)
+* Multi-factor risk evaluation
 
-### 📂 Progress Format
+### Outputs:
 
-```
-/progress
-1.png
-2.png
-3.png
-```
-
-* Files must be **numbered sequentially**
-* Each file should reflect **actual development progress**
+* Risk level
+* Estimated delay
+* Updated delivery time
+* Cause of delay
+* Smart recommendations
 
 ---
 
-## 📝 Changelog Rules (VERY IMPORTANT)
+## 🔄 System Workflow
 
-Every commit must be reflected in `CHANGELOG.md`.
-
-You can:
-
-* Update it per commit, OR
-* Update it periodically (but must be complete at the end)
-
----
-
-### 📌 Changelog Format
-
-```md
-## HH:MM
-
-### Features Added
-- Added login functionality
-- Implemented API integration
-
-### Files Modified
-- auth.js
-- login.jsx
-
-### Issues Faced
-- Firebase auth errors
-- API timeout issues
-```
+1. Planner inputs route details
+2. System analyzes multiple routes
+3. AI suggests the best route
+4. Planner confirms or selects alternative route
+5. Selected route is shared with customer dashboard
+6. Customer tracks delivery live
+7. If delay > 20 minutes → compensation option appears
+8. Customer claim updates planner dashboard
 
 ---
 
-💡 Tip:
-Instructions are already included in `AGENTS.md`.
-You can simply prompt it to **"CREATE CHANGELOG"** to follow the format.
+## ⚙️ Tech Stack
+
+### Frontend:
+
+* HTML
+* CSS
+* JavaScript
+
+### Backend:
+
+* Node.js (Express)
+
+### APIs:
+
+* Google Maps API (routing & tracking)
+* Weather API (delay prediction)
+
+### Database (Prototype):
+
+* JSON file (dummy database using Node.js fs module)
+
+### Version Control:
+
+* GitHub (with structured commits and changelog)
 
 ---
 
-## 📖 Documentation
+## 📁 Project Structure
 
-We have provided:
 
-* Examples
-* Guidelines
 
-Inside:
+## ✨ Key Features
 
-* `AGENTS.md`
-* `README.md`
-
-Please follow them strictly.
-
----
-
-## 🔍 Monitoring & Verification
-
-* Random checks will be conducted during the hackathon
-* Organizers may:
-
-  * Inspect commit history
-  * Review changelog consistency
-  * Verify progress evidence
+* Multi-factor delay prediction
+* AI-based route suggestion (simulated)
+* Interactive map with route switching
+* Live delivery tracking (simulated)
+* Explainable results
+* Dynamic pricing insights
+* Delay compensation system
 
 ---
 
-## 👨‍💻 Team Collaboration Rules
+## 🔧 Hackathon Workflow
 
-* All members must be added as **collaborators**
-* By the end of the hackathon:
-
-  * **Each member must have at least one commit**
-
----
-
-## ⚠️ Disqualification Criteria
-
-* Use of **pre-built / pre-developed projects**
-* Fake or manipulated commit history
-* Missing hourly commits or progress updates
-* Incomplete or inconsistent changelog
+* Regular GitHub commits
+* `/progress/` folder for screenshots and updates
+* `CHANGELOG.md` to track feature additions
 
 ---
 
-## 🏁 Final Note
+## 📌 Outcome
 
-Focus on building, learning, and enjoying the experience.
+SupplyIQ demonstrates how intelligent systems can proactively manage supply chain disruptions, reduce delays, and improve overall delivery efficiency while enhancing customer experience.
 
 ---
 
-🔥 **Build. Break. Innovate. See you at NEXUS.**
+## 🚧 Future Enhancements
+
+* Real-time database integration (Firebase/MongoDB)
+* Machine learning-based prediction models
+* Real-time GPS tracking
+* Push notifications for customers
+* Advanced analytics dashboard
+
+---
+
+## 👩‍💻 Team 13
+* Meenakshi Menon
+* Rajalakshmi R
+* Jiya Joe Palathinkal
+
+---
