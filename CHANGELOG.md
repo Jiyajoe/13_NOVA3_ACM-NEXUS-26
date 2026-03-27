@@ -28,3 +28,15 @@
 
 ### Issues Faced
 - Initial remote image download attempt failed, resolved by using provided local files
+
+## 18:30
+
+### Features Added
+- Implemented login API
+
+### Files Modified
+- server.js
+- routes/auth.js
+
+### Issues Faced
+- JWT error fixed
