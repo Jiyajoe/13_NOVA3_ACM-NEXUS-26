@@ -379,9 +379,21 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 //  CONFIG
 // ══════════════════════════════════════════════════════════════
 const BASE = 'http://localhost:3000';
-const OPENWEATHER_KEY = 'demo'; // Replace with real key — falls back gracefully
+let OPENWEATHER_KEY = null; // Loaded from server on startup
 const ROUTE_COLORS = ['#00e5a0','#0099ff','#ffb340','#ff4d6a'];
- 
+
+// Load API configuration from server
+async function loadConfig(){
+  try{
+    const res=await fetch(`${BASE}/config`);
+    const data=await res.json();
+    OPENWEATHER_KEY=data.apiKey;
+  } catch(e){
+    console.warn('Could not load config from server');
+  }
+}
+loadConfig();
+
 let currentUser = null;
 let plannerMap = null, customerMap = null;
 let fromCoords = null, toCoords = null;
