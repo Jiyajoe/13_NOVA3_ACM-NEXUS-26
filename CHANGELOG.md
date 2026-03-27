@@ -98,3 +98,14 @@
 
 ### Issues Faced
 - Routes not fetching from Directions API
+
+## 01:32
+
+### Features Added
+- Updated JSON file with required data and structure
+
+### Files Modified
+- order.json
+
+### Issues Faced
+- None
