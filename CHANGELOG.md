@@ -76,8 +76,6 @@
 - Removed stray "Copy" text from server.js causing ReferenceError
 - Successfully tested server startup with new endpoints
 
-### Issues Faced
-- Port conflict while integrating frontend and backend
 
 ## 23:47
 ### Features Added
