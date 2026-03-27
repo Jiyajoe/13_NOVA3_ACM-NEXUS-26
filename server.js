@@ -1,4 +1,5 @@
 
+require('dotenv').config();
 const express = require("express");
 const app = express();
 const PORT = 3000;
@@ -6,6 +7,14 @@ const PORT = 3000;
 app.use(express.json());
 const cors = require("cors");
 app.use(cors());
+
+// ── Serve API configuration (no secrets exposed) ──
+app.get("/config", (req, res) => {
+  return res.json({
+    apiKey: process.env.WEATHER_API_KEY || null,
+    hasApiKey: !!process.env.WEATHER_API_KEY
+  });
+});
  
 // ── Users ──────────────────────────────────────────────────────────────────
 const USERS = [
