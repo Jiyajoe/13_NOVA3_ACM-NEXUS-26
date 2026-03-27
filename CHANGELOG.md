@@ -86,3 +86,15 @@
 
 ### Issues Faced
 - None
+
+
+
+## 01:08
+### Features Added
+- Updated index.html to display map on the planner dashboard
+
+### Files Modified
+- index.html
+
+### Issues Faced
+- Routes not fetching from Directions API
