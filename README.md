@@ -1,7 +1,9 @@
 # SupplyIQ - Smart Supply Chain Disruption Prediction System
 
 ## Overview
-SupplyIQ is a hackathon-ready web prototype for predicting delivery disruption before dispatch.
+SupplyIQ is a hackathon-ready web prototype for predicting delivery disruption before dispatch.The system analyzes multiple real-world factors such as distance, traffic, weather, and time of day to estimate delay risks and optimize delivery routes.
+It provides a dual-dashboard experience for both planners and customers, ensuring transparency, efficiency, and smarter decision-making in supply chain operations.
+
 It includes:
 - Planner dashboard for route analysis and route confirmation.
 - Customer dashboard for delivery tracking.
@@ -61,7 +63,7 @@ It includes:
 - High (holiday and/or heavy overlap)
 
 ## Tech Stack
-- Frontend: HTML, CSS, JavaScript.
+- Frontend: HTML, JavaScript.
 - Backend: Node.js, Express.
 - APIs: OpenWeather, TomTom Routing Traffic, Nominatim geocoding, OSRM routing.
 - Storage: In-memory arrays/objects (prototype mode).
@@ -90,11 +92,6 @@ npm install
 npm start
 ```
 Server starts at `http://localhost:3000`.
-
-## Hackathon Notes
-- Kept implementation beginner-friendly and fast to run.
-- Minimal dependencies and simple rule-based logic.
-- Non-intrusive UI additions were implemented as modular popup/add-on patterns.
 
 ## Team 13
 - Meenakshi Menon
