@@ -278,13 +278,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <div class="section-label">Live Weather</div>
         <div id="weatherDisplay"><p class="weather-loading">Enter a location above to fetch weather.</p></div>
  
-        <div class="section-label">Traffic Level</div>
-        <div class="select-group" id="trafficGroup">
-          <div class="select-option sel" data-val="Low" onclick="selectOpt('trafficGroup',this)"><span class="opt-icon">🟢</span>Low</div>
-          <div class="select-option" data-val="Medium" onclick="selectOpt('trafficGroup',this)"><span class="opt-icon">🟡</span>Medium</div>
-          <div class="select-option" data-val="High" onclick="selectOpt('trafficGroup',this)"><span class="opt-icon">🔴</span>High</div>
-        </div>
- 
         <div class="section-label">Time of Day</div>
         <div class="select-group" id="timeOfDayGroup">
           <div class="select-option sel" data-val="Morning" onclick="selectOpt('timeOfDayGroup',this)"><span class="opt-icon">🌅</span>Morning</div>
@@ -379,7 +372,11 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 //  CONFIG
 // ══════════════════════════════════════════════════════════════
 const BASE = 'http://localhost:3000';
-let OPENWEATHER_KEY = null; // Loaded from server on startup
+
+let WEATHER_KEY = null; // Loaded from server on startup
+
+const OPENWEATHER_KEY = process.env.WEATHER_KEY;
+
 const ROUTE_COLORS = ['#00e5a0','#0099ff','#ffb340','#ff4d6a'];
 
 // Load API configuration from server
@@ -497,8 +494,6 @@ async function fetchWeather(coords){
     if(!res.ok) throw new Error('API key invalid or rate limited');
     const d=await res.json();
     const icon=weatherIcon(d.weather[0].main);
-    const weatherVal=d.weather[0].main==='Rain'?'Rain':'Clear';
-    setWeatherField(weatherVal);
     el.innerHTML=`<div class="weather-info"><span class="weather-icon">${icon}</span><div class="weather-detail"><div class="weather-temp">${Math.round(d.main.temp)}°C</div><div class="weather-desc">${d.weather[0].description} · ${d.name}</div></div></div>`;
   } catch {
     // Graceful fallback — show placeholder
@@ -510,13 +505,6 @@ async function fetchWeather(coords){
 function weatherIcon(main){
   const map={Clear:'☀️',Clouds:'⛅',Rain:'🌧️',Drizzle:'🌦️',Thunderstorm:'⛈️',Snow:'❄️',Mist:'🌫️',Fog:'🌫️'};
   return map[main]||'🌡️';
-}
- 
-function setWeatherField(val){
-  // Auto-set weather selector
-  document.querySelectorAll('#weatherGroup .select-option').forEach(o=>{
-    o.classList.toggle('sel',o.dataset.val===val);
-  });
 }
  
 // ── OSRM Routing ───────────────────────────────────────────────
@@ -571,12 +559,10 @@ async function fetchAndRenderRoutes(){
     plannerMap.fitBounds(bounds,{padding:[40,40]});
  
     // Server-side prediction for all routes
-    const traffic=getSelected('trafficGroup');
-    const weather=getSelected('weatherGroup')||'Clear';
     const timeOfDay=getSelected('timeOfDayGroup');
     const expectedDeliveryTime=document.getElementById('deliveryTime').value;
  
-    const compRes=await fetch(`${BASE}/routes/compare`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({traffic,weather,timeOfDay,expectedDeliveryTime,routes:routesForServer})});
+    const compRes=await fetch(`${BASE}/routes/compare`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({routes:routesForServer,timeOfDay,expectedDeliveryTime,fromCoords,toCoords})});
     const compData=await compRes.json();
  
     if(!compData.success){showToast('Route comparison failed.','err');ml.classList.add('hidden');return}
@@ -614,15 +600,15 @@ function renderRoutePanel(compData){
       ${isBest?'<div class="best-badge">AI Best</div>':''}
       <div class="route-name" style="color:${ROUTE_COLORS[i]}">${r.routeName}</div>
       <div class="route-stats">
-        <div class="rs"><div class="rs-label">Risk</div><div class="rs-val ${riskColor(r.risk)}">${r.risk}</div></div>
-        <div class="rs"><div class="rs-label">Delay</div><div class="rs-val ${riskColor(r.risk)}">+${r.delayMinutes}m</div></div>
+        <div class="rs"><div class="rs-label">Delay Level</div><div class="rs-val ${riskColor(r.delayLevel)}">${r.delayLevel}</div></div>
+        <div class="rs"><div class="rs-label">Delay</div><div class="rs-val ${riskColor(r.delayLevel)}">+${r.delayMinutes}m</div></div>
         <div class="rs"><div class="rs-label">ETA</div><div class="rs-val accent">${r.updatedDeliveryTime||'—'}</div></div>
       </div>
       <div class="route-stats" style="margin-top:0">
         <div class="rs"><div class="rs-label">Distance</div><div class="rs-val accent">${r.distanceKm.toFixed(1)} km</div></div>
         <div class="rs"><div class="rs-label">Duration</div><div class="rs-val accent">${r.durationMinutes} min</div></div>
       </div>
-      <div class="route-reasons">${(r.reasons||[]).slice(0,2).map(x=>`<div class="route-reason-item">${x}</div>`).join('')||'<div style="color:var(--muted);font-size:0.7rem">No risk factors.</div>'}</div>
+      <div class="route-reasons">${(r.reasons||[]).slice(0,2).map(x=>`<div class="route-reason-item">${x}</div>`).join('')||'<div style="color:var(--muted);font-size:0.7rem">No delay factors.</div>'}</div>
     `;
     card.addEventListener('click',()=>selectRoute(i));
     grid.appendChild(card);
@@ -653,7 +639,7 @@ function selectRoute(idx){
   const r=routeData[idx];
   if(r){
     const isBest=idx===bestRouteIdx;
-    document.getElementById('confirmInfo').innerHTML=`<strong>${r.routeName}</strong> selected — ${r.risk} risk · +${r.delayMinutes} min · ETA ${r.updatedDeliveryTime||'—'}${isBest?' · <span style="color:var(--accent)">✓ AI Recommended</span>':''}`;
+    document.getElementById('confirmInfo').innerHTML=`<strong>${r.routeName}</strong> selected — Delay Level ${r.delayLevel} · +${r.delayMinutes} min · ETA ${r.updatedDeliveryTime||'—'}${isBest?' · <span style="color:var(--accent)">✓ AI Recommended</span>':''}`;
     document.getElementById('confirmBar').classList.remove('hidden');
   }
 }
@@ -663,11 +649,33 @@ function highlightRoute(idx){
 }
  
 // ── Analyze button ─────────────────────────────────────────────
-async function handleAnalyze(){
-  const from=document.getElementById('fromInput').value.trim();
-  const to=document.getElementById('toInput').value.trim();
-  if(!from||!to){showToast('Enter origin and destination.','err');return}
-  if(!fromCoords||!toCoords){showToast('Could not geocode locations. Try more specific names.','err');return}
+async function handleAnalyze() {
+  const from = document.getElementById('fromInput').value.trim();
+  const to = document.getElementById('toInput').value.trim();
+  const timeOfDay = getSelected('timeOfDayGroup');
+  const expectedDeliveryTime = document.getElementById('deliveryTime').value;
+
+  if (!from || !to) {
+    showToast('Enter both origin and destination.','err');
+    return;
+  }
+
+  // Ensure latest coordinates are available before route analysis.
+  if (!fromCoords || !toCoords) {
+    await geocodeLocation('from');
+    await geocodeLocation('to');
+  }
+
+  if (!fromCoords || !toCoords) {
+    showToast('Unable to resolve one of the locations.','err');
+    return;
+  }
+
+  if (!timeOfDay || !expectedDeliveryTime) {
+    showToast('Select time of day and expected delivery time.','err');
+    return;
+  }
+
   await fetchAndRenderRoutes();
 }
  
@@ -737,7 +745,7 @@ async function handleTrack(){
 function renderCustomerDelivery(d){
   const el=document.getElementById('deliveryInfo');
   const route=d.chosenRoute||{};
-  const risk=route.risk||'—';
+  const risk=route.delayLevel||'—';
   const delay=route.delayMinutes||0;
   const eta=route.updatedDeliveryTime||'—';
   const progress=d.progress||0;
@@ -750,7 +758,7 @@ function renderCustomerDelivery(d){
       <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
       <div class="progress-label">${progress}% complete</div>
       <div class="dc-stats">
-        <div class="dc-stat"><div class="dc-stat-label">Risk Level</div><div class="dc-stat-val ${riskColor(risk)}">${risk}</div></div>
+        <div class="dc-stat"><div class="dc-stat-label">Delay  Level</div><div class="dc-stat-val ${riskColor(risk)}">${risk}</div></div>
         <div class="dc-stat"><div class="dc-stat-label">Est. Delay</div><div class="dc-stat-val ${riskColor(risk)}">+${delay} min</div></div>
         <div class="dc-stat"><div class="dc-stat-label">Revised ETA</div><div class="dc-stat-val accent">${eta}</div></div>
         <div class="dc-stat"><div class="dc-stat-label">Distance</div><div class="dc-stat-val accent">${route.distanceKm?route.distanceKm.toFixed(1)+' km':'—'}</div></div>

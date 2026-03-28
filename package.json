@@ -1,0 +1,26 @@
+{
+  "name": "13_nova3_acm-nexus-26",
+  "version": "1.0.0",
+  "description": "SupplyIQ is a web-based prototype designed to help logistics planners predict and prevent delivery disruptions before dispatch. The system analyzes multiple real-world factors such as distance, traffic, weather, and time of day to estimate delay risks and optimize delivery routes.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jiyajoe/13_NOVA3_ACM-NEXUS-26.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jiyajoe/13_NOVA3_ACM-NEXUS-26/issues"
+  },
+  "homepage": "https://github.com/Jiyajoe/13_NOVA3_ACM-NEXUS-26#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "node-fetch": "^3.3.2"
+  }
+}
