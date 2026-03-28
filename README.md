@@ -1,7 +1,7 @@
 # SupplyIQ - Smart Supply Chain Disruption Prediction System
 
 ## Overview
-SupplyIQ is a hackathon-ready web prototype for predicting delivery disruption before dispatch.The system analyzes multiple real-world factors such as distance, traffic, weather, and time of day to estimate delay risks and optimize delivery routes.
+SupplyIQ is a web prototype for predicting delivery disruption before dispatch.The system analyzes multiple real-world factors such as distance, traffic, weather, and time of day to estimate delay risks and optimize delivery routes.
 It provides a dual-dashboard experience for both planners and customers, ensuring transparency, efficiency, and smarter decision-making in supply chain operations.
 
 It includes:
