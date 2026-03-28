@@ -159,6 +159,47 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .track-input::placeholder{color:var(--muted)}
 .btn-track{background:var(--accent);color:#090d14;border:none;border-radius:8px;padding:10px 16px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;cursor:pointer;white-space:nowrap;transition:opacity 0.15s}
 .btn-track:hover{opacity:0.85}
+.btn-pricing{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;cursor:pointer;transition:border-color 0.2s,transform 0.1s,background 0.2s;margin-bottom:14px}
+.btn-pricing:hover{border-color:rgba(0,229,160,0.45);background:rgba(0,229,160,0.08);transform:translateY(-1px)}
+
+/* Smart pricing modal */
+.pricing-modal{position:fixed;inset:0;background:rgba(9,13,20,0.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:2100;padding:16px}
+.pricing-modal.show{display:flex}
+.pricing-dialog{width:min(760px,100%);max-height:88vh;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--card-shadow);padding:16px}
+.pricing-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.pricing-title{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent)}
+.pricing-close{background:none;border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:0.95rem}
+.pricing-close:hover{border-color:var(--danger);color:var(--danger)}
+.pricing-layout{display:grid;grid-template-columns:1.2fr 1fr;gap:12px}
+.pricing-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px}
+.calendar-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.month-label{font-family:'Syne',sans-serif;font-size:0.84rem;font-weight:700;color:var(--text)}
+.month-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer}
+.month-btn:hover{border-color:var(--accent);color:var(--accent)}
+.calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.calendar-weekdays div{font-size:0.58rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);text-align:center;padding:2px 0}
+.day-cell{height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:0.72rem;cursor:pointer}
+.day-cell:hover{border-color:rgba(255,255,255,0.2)}
+.day-cell.empty{opacity:0.25;cursor:default}
+.day-cell.weekend{border-color:rgba(255,179,64,0.35);background:rgba(255,179,64,0.08)}
+.day-cell.holiday{border-color:rgba(255,77,106,0.45);background:rgba(255,77,106,0.1)}
+.day-cell.selected{outline:2px solid rgba(0,229,160,0.35);border-color:var(--accent)}
+.pricing-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.legend-item{font-size:0.63rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.pricing-form-row{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.pricing-form-row label{font-size:0.62rem;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted)}
+.pricing-select{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-family:'DM Mono',monospace;font-size:0.75rem}
+.prediction-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px}
+.prediction-item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.72rem}
+.prediction-item:last-child{border-bottom:none}
+.prediction-item span:first-child{color:var(--muted)}
+.prediction-item strong{color:var(--text);font-family:'Syne',sans-serif}
+.traffic-pill{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:3px 8px;border-radius:12px;font-size:0.65rem;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:0.04em}
+.traffic-pill.low{background:rgba(0,229,160,0.12);color:var(--accent);border:1px solid rgba(0,229,160,0.28)}
+.traffic-pill.medium{background:rgba(255,179,64,0.15);color:var(--warn);border:1px solid rgba(255,179,64,0.35)}
+.traffic-pill.high{background:rgba(255,77,106,0.14);color:var(--danger);border:1px solid rgba(255,77,106,0.35)}
+.pricing-note{font-size:0.64rem;color:var(--muted);margin-top:8px;line-height:1.5}
  
 .delivery-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;animation:fadeUp 0.3s ease both}
 .dc-id{font-size:0.65rem;color:var(--muted);margin-bottom:8px}
@@ -213,6 +254,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   .map-calc-container{flex-direction:column;gap:0;height:60vh}
   .map-area{border-radius:0;border:none}
   .calc-panel{border-radius:0;border:none;border-top:1px solid var(--border);max-height:300px;overflow-y:auto}
+  .pricing-layout{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -353,6 +395,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <input class="track-input" id="trackIdInput" placeholder="DEL-1234567890-123"/>
         <button class="btn-track" onclick="handleTrack()">Track</button>
       </div>
+      <button class="btn-pricing" onclick="openPricingModal()">Check Busy Days &amp; Delivery Charges</button>
       <div id="deliveryInfo">
         <div class="empty-state">
           <div class="empty-icon">📦</div>
@@ -366,6 +409,57 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
   </div>
 </div>
+
+<!-- Smart Delivery Pricing Modal -->
+<div class="pricing-modal" id="pricingModal" onclick="onPricingBackdrop(event)">
+  <div class="pricing-dialog" role="dialog" aria-modal="true" aria-label="Smart Delivery Pricing and Busy Days">
+    <div class="pricing-top">
+      <div class="pricing-title">Smart Delivery Pricing &amp; Busy Days</div>
+      <button class="pricing-close" onclick="closePricingModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="pricing-layout">
+      <div class="pricing-card">
+        <div class="calendar-nav">
+          <button class="month-btn" onclick="shiftPricingMonth(-1)" aria-label="Previous month">‹</button>
+          <div class="month-label" id="pricingMonthLabel">Month YYYY</div>
+          <button class="month-btn" onclick="shiftPricingMonth(1)" aria-label="Next month">›</button>
+        </div>
+        <div class="calendar-weekdays">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+        <div class="calendar-grid" id="busyCalendarGrid"></div>
+        <div class="pricing-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:rgba(255,179,64,0.8)"></span>Weekend (Moderate)</div>
+          <div class="legend-item"><span class="legend-dot" style="background:rgba(255,77,106,0.8)"></span>Holiday/Festival (High)</div>
+          <div class="legend-item"><span class="legend-dot" style="background:rgba(0,229,160,0.8)"></span>Selected Day</div>
+        </div>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-form-row">
+          <label>Selected Date</label>
+          <select class="pricing-select" id="pricingDateSummary" disabled>
+            <option>Choose a day from calendar</option>
+          </select>
+        </div>
+        <div class="pricing-form-row">
+          <label>Delivery Time Slot</label>
+          <select class="pricing-select" id="pricingTimeSlot" onchange="updateBusyPricingPrediction()">
+            <option value="10:00">Morning (10:00 AM)</option>
+            <option value="14:00">Afternoon (2:00 PM)</option>
+            <option value="18:00" selected>Evening Peak (6:00 PM)</option>
+            <option value="21:30">Late Night (9:30 PM)</option>
+          </select>
+        </div>
+        <div class="prediction-panel">
+          <div class="prediction-item"><span>Expected Traffic Level</span><strong id="predTraffic"><span class="traffic-pill low">Low</span></strong></div>
+          <div class="prediction-item"><span>Estimated Delivery Charge</span><strong id="predCharge">₹0.00</strong></div>
+          <div class="prediction-item"><span>Reason</span><strong id="predReason">Regular day</strong></div>
+        </div>
+        <div class="pricing-note">Rules: Weekend +10%, Evening (5 PM - 9 PM) +15%, Holiday/Festival +25%, capped at +40% over base rate.</div>
+      </div>
+    </div>
+  </div>
+</div>
  
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -373,9 +467,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 // ══════════════════════════════════════════════════════════════
 const BASE = 'http://localhost:3000';
 
-let WEATHER_KEY = null; // Loaded from server on startup
-
-const OPENWEATHER_KEY = process.env.WEATHER_KEY;
+let OPENWEATHER_KEY = null; // Loaded from backend config if available
 
 const ROUTE_COLORS = ['#00e5a0','#0099ff','#ffb340','#ff4d6a'];
 
@@ -384,9 +476,10 @@ async function loadConfig(){
   try{
     const res=await fetch(`${BASE}/config`);
     const data=await res.json();
-    OPENWEATHER_KEY=data.apiKey;
+    OPENWEATHER_KEY=data.apiKey||OPENWEATHER_KEY;
   } catch(e){
-    console.warn('Could not load config from server');
+    OPENWEATHER_KEY=process.env.WEATHER_KEY;
+    console.warn('Could not load config from server, using fallback weather key');
   }
 }
 loadConfig();
@@ -400,6 +493,23 @@ let selectedRouteIdx = null;
 let currentSessionId = null;
 let bestRouteIdx = null;
 let geocodeTimers = {};
+let pricingMonthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedPricingDate = new Date();
+
+const BASE_DELIVERY_RATE = 120;
+const WEEKEND_INCREASE = 10;
+const EVENING_INCREASE = 15;
+const HOLIDAY_INCREASE = 25;
+const MAX_TOTAL_INCREASE = 40;
+
+const HOLIDAY_MAP = {
+  '01-01':'New Year',
+  '01-26':'Republic Day',
+  '08-15':'Independence Day',
+  '10-02':'Gandhi Jayanti',
+  '10-20':'Festival Season',
+  '12-25':'Christmas'
+};
  
 // ── Helpers ────────────────────────────────────────────────────
 function showToast(msg, type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type}`;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500)}
@@ -408,6 +518,151 @@ function switchView(v){document.querySelectorAll('.view').forEach(x=>x.classList
 function selectOpt(gid,el){document.querySelectorAll(`#${gid} .select-option`).forEach(o=>o.classList.remove('sel'));el.classList.add('sel')}
 function getSelected(gid){const el=document.querySelector(`#${gid} .sel`);return el?el.dataset.val:null}
 function riskColor(r){return r==='High'?'danger':r==='Medium'?'warn':'accent'}
+
+function fmtDateKey(d){
+  return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getHolidayName(d){
+  return HOLIDAY_MAP[fmtDateKey(d)]||null;
+}
+
+function isWeekend(d){
+  const day=d.getDay();
+  return day===0||day===6;
+}
+
+function isEveningSlot(timeStr){
+  const hour=Number((timeStr||'00:00').split(':')[0]);
+  return hour>=17&&hour<21;
+}
+
+function formatPricingDate(d){
+  return d.toLocaleDateString('en-US',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+}
+
+function computeBusyPricing(date,timeStr){
+  const reasons=[];
+  let totalPct=0;
+
+  if(isWeekend(date)){
+    totalPct+=WEEKEND_INCREASE;
+    reasons.push('Weekend');
+  }
+
+  if(isEveningSlot(timeStr)){
+    totalPct+=EVENING_INCREASE;
+    reasons.push('Evening Rush');
+  }
+
+  const holidayName=getHolidayName(date);
+  if(holidayName){
+    totalPct+=HOLIDAY_INCREASE;
+    reasons.push(holidayName);
+  }
+
+  totalPct=Math.min(totalPct,MAX_TOTAL_INCREASE);
+  const estimatedCharge=BASE_DELIVERY_RATE*(1+totalPct/100);
+
+  let traffic='Low';
+  if(holidayName||totalPct>=30||((isWeekend(date))&&isEveningSlot(timeStr))) traffic='High';
+  else if(totalPct>=10) traffic='Medium';
+
+  return {
+    traffic,
+    estimatedCharge,
+    reason:reasons.length?reasons.join(' + '):'Regular day and non-peak time',
+  };
+}
+
+function renderBusyCalendar(){
+  const grid=document.getElementById('busyCalendarGrid');
+  const label=document.getElementById('pricingMonthLabel');
+  if(!grid||!label) return;
+
+  const y=pricingMonthCursor.getFullYear();
+  const m=pricingMonthCursor.getMonth();
+  label.textContent=pricingMonthCursor.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+  const firstDay=new Date(y,m,1).getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  grid.innerHTML='';
+
+  for(let i=0;i<firstDay;i++){
+    const empty=document.createElement('button');
+    empty.className='day-cell empty';
+    empty.disabled=true;
+    empty.textContent='';
+    grid.appendChild(empty);
+  }
+
+  for(let day=1;day<=daysInMonth;day++){
+    const d=new Date(y,m,day);
+    const btn=document.createElement('button');
+    btn.className='day-cell';
+    if(isWeekend(d)) btn.classList.add('weekend');
+    if(getHolidayName(d)) btn.classList.add('holiday');
+    if(
+      d.getFullYear()===selectedPricingDate.getFullYear()&&
+      d.getMonth()===selectedPricingDate.getMonth()&&
+      d.getDate()===selectedPricingDate.getDate()
+    ) btn.classList.add('selected');
+
+    btn.textContent=String(day);
+    btn.onclick=()=>{
+      selectedPricingDate=d;
+      renderBusyCalendar();
+      updateBusyPricingPrediction();
+    };
+    grid.appendChild(btn);
+  }
+}
+
+function shiftPricingMonth(delta){
+  pricingMonthCursor=new Date(pricingMonthCursor.getFullYear(),pricingMonthCursor.getMonth()+delta,1);
+  renderBusyCalendar();
+}
+
+function updateBusyPricingPrediction(){
+  const timeSel=document.getElementById('pricingTimeSlot');
+  const dateSummary=document.getElementById('pricingDateSummary');
+  const trafficEl=document.getElementById('predTraffic');
+  const chargeEl=document.getElementById('predCharge');
+  const reasonEl=document.getElementById('predReason');
+  if(!timeSel||!dateSummary||!trafficEl||!chargeEl||!reasonEl) return;
+
+  const dateLabel=formatPricingDate(selectedPricingDate);
+  dateSummary.innerHTML=`<option>${dateLabel}</option>`;
+
+  const out=computeBusyPricing(selectedPricingDate,timeSel.value);
+  const cls=out.traffic==='High'?'high':out.traffic==='Medium'?'medium':'low';
+  trafficEl.innerHTML=`<span class="traffic-pill ${cls}">${out.traffic}</span>`;
+  chargeEl.textContent=`₹${out.estimatedCharge.toFixed(2)}`;
+  reasonEl.textContent=out.reason;
+}
+
+function openPricingModal(){
+  const modal=document.getElementById('pricingModal');
+  if(!modal) return;
+  modal.classList.add('show');
+  pricingMonthCursor=new Date(selectedPricingDate.getFullYear(),selectedPricingDate.getMonth(),1);
+  renderBusyCalendar();
+  updateBusyPricingPrediction();
+}
+
+function closePricingModal(){
+  const modal=document.getElementById('pricingModal');
+  if(!modal) return;
+  modal.classList.remove('show');
+}
+
+function onPricingBackdrop(e){
+  if(e.target&&e.target.id==='pricingModal') closePricingModal();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closePricingModal();
+});
  
 // ── Auth ───────────────────────────────────────────────────────
 async function handleLogin(){

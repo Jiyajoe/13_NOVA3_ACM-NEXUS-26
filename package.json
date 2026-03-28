@@ -20,6 +20,7 @@
   "homepage": "https://github.com/Jiyajoe/13_NOVA3_ACM-NEXUS-26#readme",
   "dependencies": {
     "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "node-fetch": "^3.3.2"
   }
